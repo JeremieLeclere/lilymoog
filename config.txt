@@ -1,0 +1,12 @@
+tempo=94
+fs=48000
+lp_fc=400
+lp_Q=1.5
+lp_gain=1.0
+attack_time=20
+decay_time=5
+sustain=0.9
+release_time=15
+waveform=sine
+coupling=fifth
+intensity=0.6
