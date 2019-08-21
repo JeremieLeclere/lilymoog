@@ -36,9 +36,36 @@
 static int NOTES_LENGTH[NB_LENGTHS] = {1, 2, 4, 8, 16};
 
 
-/*
- * Check detected length name matches one of the supported values
- */
+/* Convert user duration to corresponding number of sixteenth notes */
+static int len_2_nb_sixteenth(int len)
+{
+    int ret;
+
+    switch (len) {
+    case 1:
+        ret = 16;
+    break;
+    case 2:
+        ret = 8;
+    break;
+    case 4:
+        ret = 4;
+    break;
+    case 8:
+        ret = 2;
+    break;
+    case 16:
+        ret = 1;
+    break;
+    default:
+        ret = -1;
+    }
+
+    return ret;
+}
+
+
+/* Check detected length name matches one of the supported values */
 static int check_len_update(int len_update)
 {
     int i, ret = -EINVAL;
@@ -141,6 +168,8 @@ int parse_event(char *token, struct event *event)
             LOGE("Unexpected length update !");
             goto exit;
         }
+
+        event->len_update = len_2_nb_sixteenth(event->len_update);
     }
 
 exit:

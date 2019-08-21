@@ -35,7 +35,7 @@
  */
 struct event {
     char note[3];                           ///< Note name
-    int len_update;                         ///< Note length update value
+    int len_update;                         ///< Note length update value (number of sixteenth notes)
     int rank_update;                        ///< Note rank update value
 };
 
