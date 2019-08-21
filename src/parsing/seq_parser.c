@@ -152,11 +152,11 @@ exit:
 int parse_sequence(const char *filename, struct seq *sequence)
 {
     char *c;
-    FILE *fd;
     int ret = 0;
     int event_id;
     int line_index;
     int event_index;
+    FILE *fd = NULL;
     size_t line_size;
     char *line = NULL;
     char *token = NULL;
