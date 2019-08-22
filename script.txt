@@ -1,2 +1,2 @@
-e8  b, d'16 e r g16 g2 e8 b, d'16 e r g,16 g2
+e8  b, d'16 e r g16[fc:1500] g2 e8 b, d'16[fc:150] e r g,16[fc:250,q:5] g2
 e'8  b, d'16 e r g16 g2 e8 b, d'16 e r g,16 g2

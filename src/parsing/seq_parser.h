@@ -31,12 +31,23 @@
 
 
 /**
+ * @brief Arbitrary value (not supposed to be a realistic request) used to initialize low pass
+ * update parameter in event structure, as zero might be a a realisatic request.
+ * (have to find something smarter than that ...)
+ */
+#define LP_NO_UPDATE_VALUE     (-987341.5)
+
+
+/**
  * @brief Note event structure
  */
 struct event {
     char note[3];                           ///< Note name
     int len_update;                         ///< Note length update value (number of sixteenth notes)
     int rank_update;                        ///< Note rank update value
+    float q_update;                         ///< Low pass Q factor update
+    float fc_update;                        ///< Low pass cutoff frequency update
+    float gain_update;                      ///< Low pass gain update
 };
 
 

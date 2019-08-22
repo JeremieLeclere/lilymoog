@@ -103,6 +103,7 @@ struct low_pass {
     int table_index;
     int update_flag;
     struct low_pass_fp_coeffs coeffs;
+    struct low_pass_params parameters;
     struct low_pass_fp_coeffs new_coeffs;
 };
 
@@ -212,6 +213,8 @@ struct low_pass *low_pass_create(const struct low_pass_params *params)
 
     low_pass_feed(handle, &coeffs, 0);
 
+    memcpy(&handle->parameters, params, sizeof(struct low_pass_params));
+
     return handle;
 
 failure:
@@ -256,6 +259,25 @@ int low_pass_update(struct low_pass *handle, const struct low_pass_params *new_p
 
     /* update biquad upcoming coefficients */
     low_pass_feed(handle, &new_coeffs, 1);
+
+    memcpy(&handle->parameters, new_params, sizeof(struct low_pass_params));
+
+exit:
+
+    return ret;
+}
+
+
+int low_pass_get_parameters(struct low_pass *handle, struct low_pass_params *params)
+{
+    int ret = 0;
+
+    if ((!handle) || (!params)) {
+        ret = -EINVAL;
+        goto exit;
+    }
+
+    memcpy(params, &handle->parameters, sizeof(struct low_pass_params));
 
 exit:
 

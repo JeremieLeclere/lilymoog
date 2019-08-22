@@ -157,16 +157,29 @@ int moog_get_frequency(struct moog *handle, float *frequency);
 
 
 /**
+ * @brief Get low pass filter properties
+ *
+ * @param[in]  handle       : Module handle
+ * @param[out] fc           : Cutoff frequency (can be NULL, ignored if so)
+ * @param[out] Q            : Quality factor (can be NULL, ignored if so)
+ * @param[out] gain         : Gain  (can be NULL, ignored if so)
+ *
+ * @return 0 if successful, 0 > errno else
+ */
+int moog_filter_get_parameters(struct moog *handle, float *fc, float *Q, float *gain);
+
+
+/**
  * @brief Update low pass filter properties
  *
  * @param[in] handle        : Module handle
  * @param[in] fc            : New cutoff frequency (Hz, [0,fs/2[)
- * @param[in] Q             : Quality factor
- * @param[in] gain          : Gain (dB)
+ * @param[in] Q             : New quality factor
+ * @param[in] gain          : New gain (dB)
  *
  * @return 0 if successful, 0 > errno else
  */
-int moog_filter_update(struct moog *handle, float fc, float Q, float gain);
+int moog_filter_set_parameters(struct moog *handle, float fc, float Q, float gain);
 
 
 /**

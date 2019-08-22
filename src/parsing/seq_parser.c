@@ -82,11 +82,79 @@ exit:
     return ret;
 }
 
+/*
+ * Parse a MOOG_UPDATE command, which is assumed to respect following syntax:
+ *
+ *      KEY:VALUE
+ *
+ *  . KEY must be in ['q', 'fc', 'gain']
+ *  . VALUE is a float value representing new KEY value
+ */
+static int parse_moog_event(char *token, struct event *event)
+{
+    int ret = 0;
+    int position = 0;
+    int field_len = 0;
+    char field[5] = {0};
+    float value;
+
+    while ((token[position] != ':') && (position++ < strlen(token)))
+        field_len++;
+
+    if (field_len > 4) {
+        LOGE("%s: Unsupported moog update type: %s", __func__, token);
+        ret = -EINVAL;
+        goto exit;
+    }
+
+    strncpy(field, token, field_len);
+    value = atof(token + field_len + 1);
+
+    if (strcmp(field, "q") == 0) {
+        event->q_update = value;
+    } else if (strcmp(field, "fc") == 0) {
+        event->fc_update = value;
+    } else if (strcmp(field, "gain") == 0) {
+        event->gain_update = value;
+    } else {
+        LOGE("%s: Unsupported moog update type: %s", __func__, token);
+        ret = -EINVAL;
+        goto exit;
+    }
+
+exit:
+
+    return ret;
+}
+
+/*
+ * Parse the MOOG_UPDATE field, assumed to be a series of configuration elements separated
+ * by a space.
+ */
+static int parse_moog_update(char *data, struct event *event)
+{
+    int ret = 0;
+    char *ctx = NULL;
+    char *token = NULL;
+
+    token = strtok_r(data, ",", &ctx);
+    while (token) {
+        ret = parse_moog_event(token, event);
+        if (ret)
+            goto exit;
+        token = strtok_r(NULL, ",", &ctx);
+    }
+
+exit:
+
+    return ret;
+}
+
 
 /*
  * Event is assumed to respect the following structure:
  *
- *      [NOTE_NAME][RANK_UPDATE][LENGTH_UPDATE]
+ *      [NOTE_NAME][RANK_UPDATE][LENGTH_UPDATE][MOOG_UPDATE]
  *
  *  with
  *
@@ -94,9 +162,10 @@ exit:
  *                    NOTES_NAMES table. This field is mandatory.
  *  . RANK_UPDATE   : Must be a ' or a , character, indicating an octave update.
  *                    This field is optional.
- *  . LENGTH_UPDATE : Must be a number in 
+ *  . LENGTH_UPDATE : Must be a number in 1, 2, 4, 8, 16
+ *  . MOOG_UPDATE   : Moog parameters update, parsed with parse_moog_update
  */
-int parse_event(char *token, struct event *event)
+static int parse_event(char *token, struct event *event)
 {
     int ret = 0;
     int len_pos = 0;
@@ -105,8 +174,15 @@ int parse_event(char *token, struct event *event)
     int name_len = 0;
     int position = 0;
     char len[3] = {0};
+    char *sub_section = NULL;
+    int sub_section_length = 0;
+    int sub_section_position = 0;
 
+    /* Initialize event */
     memset(event, 0, sizeof(struct event));
+    event->q_update    = LP_NO_UPDATE_VALUE;
+    event->fc_update   = LP_NO_UPDATE_VALUE;
+    event->gain_update = LP_NO_UPDATE_VALUE;
 
     /* Get note name */
     while ((isalpha(*c)) && (position < strlen(token))) {
@@ -116,7 +192,7 @@ int parse_event(char *token, struct event *event)
     }
 
     if (name_len > 2) {
-        LOGE("Unexpected note name !");
+        LOGE("%s: Unexpected note name !", __func__);
         ret = -EINVAL;
         goto exit;
     }
@@ -126,7 +202,7 @@ int parse_event(char *token, struct event *event)
         event->note[1] = tolower(token[1]);
 
     if (check_note_name(event->note) == -EINVAL) {
-        LOGE("Unexpected note name !");
+        LOGE("%s: Unexpected note name !", __func__);
         goto exit;
     }
 
@@ -154,7 +230,7 @@ int parse_event(char *token, struct event *event)
 
     } else {
         if (len_len > 2) {
-            LOGE("Unexpected note length !");
+            LOGE("%s: Unexpected note length !", __func__);
             ret = -EINVAL;
             goto exit;
         }
@@ -165,14 +241,48 @@ int parse_event(char *token, struct event *event)
         event->len_update = atoi(len);
 
         if (check_len_update(event->len_update) == -EINVAL) {
-            LOGE("Unexpected length update !");
+            LOGE("%s: Unexpected length update !", __func__);
             goto exit;
         }
 
         event->len_update = len_2_nb_sixteenth(event->len_update);
     }
 
+    if (position == strlen(token))
+        goto exit;
+
+    /* Search for eventual additional section */
+    if (token[position] == '[') {
+        sub_section_position = ++position;
+        while ((token[position] != ']') && (position < strlen(token))) {
+            position++;
+            sub_section_length++;
+        }
+        if (token[position] != ']') {
+            LOGE("%s: Unterminated [] section !", __func__);
+            ret = -EINVAL;
+            goto exit;
+        }
+
+        if (sub_section_length == 0) {
+            LOGW("%s: void sub section detected '%s'", __func__, token);
+            goto exit;
+        }
+
+        sub_section = (char *)calloc(sub_section_length + 1, sizeof(char));
+        if (!sub_section) {
+            LOGE("%s: Failed to allocate sub_section string !", __func__);
+            ret = -ENOMEM;
+            goto exit;
+        }
+        strncpy(sub_section, token + sub_section_position, sub_section_length);
+        ret = parse_moog_update(sub_section, event);
+    }
+
 exit:
+
+    if (sub_section)
+        free(sub_section);
 
     return ret;
 }
@@ -187,6 +297,7 @@ int parse_sequence(const char *filename, struct seq *sequence)
     int event_index;
     FILE *fd = NULL;
     size_t line_size;
+    char *ctx = NULL;
     char *line = NULL;
     char *token = NULL;
 
@@ -207,10 +318,10 @@ int parse_sequence(const char *filename, struct seq *sequence)
     while (getline(&line, &line_size, fd) != -1) {
 
         /* Split line in space separated elements */
-        token = strtok(line, " ");
+        token = strtok_r(line, " ", &ctx);
         while (token) {
             sequence->nb_events++;
-            token = strtok(NULL, " ");
+            token = strtok_r(NULL, " ", &ctx);
         }
     }
     sequence->events = (struct event *)calloc(sequence->nb_events,
@@ -240,7 +351,7 @@ int parse_sequence(const char *filename, struct seq *sequence)
             ret = parse_event(token, &sequence->events[event_id]);
             if (ret) {
                 LOGE("%s: Line %d, event %d: '%s'", __func__,
-                     line_index, event_index, token);
+                     line_index + 1, event_index + 1, token);
             }
             token = strtok(NULL, " ");
             event_index++;
@@ -251,6 +362,9 @@ int parse_sequence(const char *filename, struct seq *sequence)
     }
 
 exit:
+
+    if (line)
+        free(line);
 
     if (fd)
         fclose(fd);

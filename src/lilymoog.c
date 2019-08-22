@@ -78,6 +78,7 @@ int main(int argc, char *argv[])
     float frequency;
     int rank, length;
     struct cfg config;
+    float Q, fc, gain;
     struct seq sequence;
     int i, j, k, c, ret;
     int g_ret = EXIT_SUCCESS;
@@ -236,6 +237,36 @@ int main(int argc, char *argv[])
             }
         }
 
+        /* Low pass filter parameters update */
+        if ((sequence.events[i].q_update != LP_NO_UPDATE_VALUE)
+        ||  (sequence.events[i].fc_update != LP_NO_UPDATE_VALUE)
+        ||  (sequence.events[i].gain_update != LP_NO_UPDATE_VALUE)) {
+
+            /* Get current filter parameters */
+            ret = moog_filter_get_parameters(moog, &fc, &Q, &gain);
+            if (ret) {
+                LOGE("Failed to retrieve Moog parameters !");
+                g_ret = EXIT_FAILURE;
+                goto exit;
+            }
+
+            /* Update specified parameters */
+            if (sequence.events[i].q_update != LP_NO_UPDATE_VALUE)
+                Q = sequence.events[i].q_update;
+            if (sequence.events[i].fc_update != LP_NO_UPDATE_VALUE)
+                fc = sequence.events[i].fc_update;
+            if (sequence.events[i].gain_update != LP_NO_UPDATE_VALUE)
+                fc = sequence.events[i].gain_update;
+
+            /* Apply new parameters set */
+            ret = moog_filter_set_parameters(moog, fc, Q, gain);
+            if (ret) {
+                LOGE("Failed to update Moog filter parameters !");
+                g_ret = EXIT_FAILURE;
+                goto exit;
+            }
+        }
+
         /* Length update */
         if (sequence.events[i].len_update != 0)
             length = sequence.events[i].len_update;
@@ -262,6 +293,9 @@ int main(int argc, char *argv[])
     }
 
 exit:
+
+    if (sequence.events)
+        free(sequence.events);
 
     if (output_frame)
         free(output_frame);

@@ -290,6 +290,9 @@ int parse_cfg(const char *filename, struct cfg *configuration)
 
 exit:
 
+    if (line)
+        free(line);
+
     if (fd)
         fclose(fd);
 

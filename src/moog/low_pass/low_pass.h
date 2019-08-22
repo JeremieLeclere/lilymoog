@@ -72,11 +72,22 @@ void low_pass_destroy(struct low_pass **handle);
  * @brief Update filter parameters
  *
  * @param[in] handle        : Module handle
- * @param[in] new_params    : New biquad parameters
+ * @param[in] new_params    : New filter parameters
  *
  * @return 0 if successful, 0 > errno else
  */
 int low_pass_update(struct low_pass *handle, const struct low_pass_params *new_params);
+
+
+/**
+ * @brief Get filter parameters
+ *
+ * @param[in]  handle       : Module handle
+ * @param[out] params       : filter parameters
+ *
+ * @return 0 if successful, 0 > errno else
+ */
+int low_pass_get_parameters(struct low_pass *handle, struct low_pass_params *params);
 
 
 /**

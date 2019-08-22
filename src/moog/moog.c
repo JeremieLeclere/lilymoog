@@ -306,7 +306,34 @@ exit:
 }
 
 
-int moog_filter_update(struct moog *handle, float fc, float Q, float gain)
+int moog_filter_get_parameters(struct moog *handle, float *fc, float *Q, float *gain)
+{
+    int ret = 0;
+    struct low_pass_params params;
+
+    if (!handle) {
+        ret = -EINVAL;
+        goto exit;
+    }
+
+    ret = low_pass_get_parameters(handle->lpf, &params);
+    if (ret)
+        goto exit;
+
+    if (Q)
+        *Q = params.Q;
+    if (fc)
+        *fc = params.fc;
+    if (gain)
+        *gain = params.gain;
+
+exit:
+
+    return ret;
+}
+
+
+int moog_filter_set_parameters(struct moog *handle, float fc, float Q, float gain)
 {
     int ret = 0;
     struct low_pass_params new_params;
