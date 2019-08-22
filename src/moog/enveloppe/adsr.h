@@ -51,7 +51,7 @@ struct adsr_params {
 /**
  * @brief Initialize ADSR module
  *
- * @param[in] handle    : Initialization parameters
+ * @param[in] params    : Initialization parameters
  *
  * @return Module handle if successful, NULL else
  */

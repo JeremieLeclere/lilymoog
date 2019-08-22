@@ -138,7 +138,7 @@ int moog_get_intensity(struct moog *handle, float *intensity);
  * @brief Set low oscillator output frequency
  *
  * @param[in] handle        : Module handle
- * @param[in] f0            : Note frequency
+ * @param[in] frequency     : Note frequency
  *
  * @return 0 if successful, 0 > errno else
  */
@@ -148,8 +148,10 @@ int moog_set_frequency(struct moog *handle, float frequency);
 /**
  * @brief Get low oscillator output frequency
  *
- * @param[în]  handle       : Module handle
+ * @param[in]  handle       : Module handle
  * @param[out] frequency    : Low oscillator frequency
+ *
+ * @return 0 if successful, 0 > errno else
  */
 int moog_get_frequency(struct moog *handle, float *frequency);
 
@@ -171,7 +173,6 @@ int moog_filter_update(struct moog *handle, float fc, float Q, float gain);
  * @brief Proceed to moog bass generation
  *
  * @param[in]  handle       : Module handle
- * @param[in]  nb_frames    : Numer of output samples
  * @param[out] output       : Output QS8.23 signal
  *
  * @return 0 if successful, 0 > errno
