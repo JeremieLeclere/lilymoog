@@ -95,7 +95,7 @@ int low_pass_get_parameters(struct low_pass *handle, struct low_pass_params *par
  *
  * @param[in] handle        : Module handle
  * @param[in] new_fc        : Target new cutoff frequency
- * @param[in] nb_frames     : Number of nb_samples to reach new cutoff frequency
+ * @param[in] nb_samples    : Number of nb_samples to reach new cutoff frequency
  *
  * @return 0 if successful, 0 > errno else
  */
