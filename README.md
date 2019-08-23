@@ -36,6 +36,10 @@ Here is the description of **lilymoog** usage:
 	    The value must be an positive int value, which will be interpreted as a number of
 	    sixteenth notes. The equivalent duration of silence will be inserted at the
 	    end of generated output file.
+	    That option is particularly useful when provided sequence does not ends with a
+	    silence: It allows Moog synthesizer to be turned OFF, and let it produce output
+	    until its release time has been reached (simply said: No click at the end of your
+	    sequence, caused by a brutal interruption of sound data).
 
 
 ## 2. Configuration file
