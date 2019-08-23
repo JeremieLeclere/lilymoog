@@ -100,63 +100,17 @@ struct low_pass {
     int32_t x2;
     int32_t y1;
     int32_t y2;
+    float sweep_fc;
+    int sweep_flag;
+    int sweep_index;
+    int sweep_length;
+    float sweep_step;
     int table_index;
     int update_flag;
     struct low_pass_fp_coeffs coeffs;
     struct low_pass_params parameters;
     struct low_pass_fp_coeffs new_coeffs;
 };
-
-
-/* Fill current/upcoming fixed point coefficients structure */
-static void low_pass_feed(struct low_pass *handle, const struct low_pass_coeffs *coeffs, int update)
-{
-    if (update) {
-
-        handle->new_coeffs.b0 = BQ_DOUBLE_2_QS328(coeffs->b0);
-        handle->new_coeffs.b1 = BQ_DOUBLE_2_QS328(coeffs->b1);
-        handle->new_coeffs.b2 = BQ_DOUBLE_2_QS328(coeffs->b2);
-        handle->new_coeffs.a1 = BQ_DOUBLE_2_QS328(coeffs->a1);
-        handle->new_coeffs.a2 = BQ_DOUBLE_2_QS328(coeffs->a2);
-
-    } else {
-
-        handle->coeffs.b0 = BQ_DOUBLE_2_QS328(coeffs->b0);
-        handle->coeffs.b1 = BQ_DOUBLE_2_QS328(coeffs->b1);
-        handle->coeffs.b2 = BQ_DOUBLE_2_QS328(coeffs->b2);
-        handle->coeffs.a1 = BQ_DOUBLE_2_QS328(coeffs->a1);
-        handle->coeffs.a2 = BQ_DOUBLE_2_QS328(coeffs->a2);
-
-    }
-}
-
-
-/* Filter coefficients linear progression to target values */
-static void low_pass_update_coeffs(struct low_pass *handle)
-{
-    int32_t delta;
-    uint16_t scale;
-
-    /* Update filter coefficients (simple linear interpolation) */
-    scale = transition_table[handle->table_index];
-    delta = handle->new_coeffs.b0 - handle->coeffs.b0;
-    handle->coeffs.b0 += (int32_t)(((int64_t)delta * scale) >> TABLE_SCALE);
-    delta = handle->new_coeffs.b1 - handle->coeffs.b1;
-    handle->coeffs.b1 += (int32_t)(((int64_t)delta * scale) >> TABLE_SCALE);
-    delta = handle->new_coeffs.b2 - handle->coeffs.b2;
-    handle->coeffs.b2 += (int32_t)(((int64_t)delta * scale) >> TABLE_SCALE);
-    delta = handle->new_coeffs.a1 - handle->coeffs.a1;
-    handle->coeffs.a1 += (int32_t)(((int64_t)delta * scale) >> TABLE_SCALE);
-    delta = handle->new_coeffs.a2 - handle->coeffs.a2;
-    handle->coeffs.a2 += (int32_t)(((int64_t)delta * scale) >> TABLE_SCALE);
-
-    /* Update transition descriptors */
-    handle->table_index++;
-    if (handle->table_index == TABLE_LEN) {
-        memcpy(&handle->coeffs, &handle->new_coeffs, sizeof(struct low_pass_fp_coeffs));
-        handle->update_flag = 0;
-    }
-}
 
 
 /* Compute filter coefficients from user parameters */
@@ -193,6 +147,102 @@ static int low_pass_design(const struct low_pass_params *params, struct low_pass
 exit:
 
     return ret;
+}
+
+
+/* Fill current/upcoming fixed point coefficients structure */
+static void low_pass_feed(struct low_pass *handle, const struct low_pass_coeffs *coeffs, int update)
+{
+    if (update) {
+
+        handle->new_coeffs.b0 = BQ_DOUBLE_2_QS328(coeffs->b0);
+        handle->new_coeffs.b1 = BQ_DOUBLE_2_QS328(coeffs->b1);
+        handle->new_coeffs.b2 = BQ_DOUBLE_2_QS328(coeffs->b2);
+        handle->new_coeffs.a1 = BQ_DOUBLE_2_QS328(coeffs->a1);
+        handle->new_coeffs.a2 = BQ_DOUBLE_2_QS328(coeffs->a2);
+
+    } else {
+
+        handle->coeffs.b0 = BQ_DOUBLE_2_QS328(coeffs->b0);
+        handle->coeffs.b1 = BQ_DOUBLE_2_QS328(coeffs->b1);
+        handle->coeffs.b2 = BQ_DOUBLE_2_QS328(coeffs->b2);
+        handle->coeffs.a1 = BQ_DOUBLE_2_QS328(coeffs->a1);
+        handle->coeffs.a2 = BQ_DOUBLE_2_QS328(coeffs->a2);
+
+    }
+}
+
+
+/* Sweep coefficients update */
+int low_pass_sweep_update(struct low_pass *handle)
+{
+    int ret = 0;
+    struct low_pass_params new_params;
+    struct low_pass_coeffs new_coeffs;
+
+    /* Set new parameters */
+    memcpy(&new_params, &handle->parameters, sizeof(struct low_pass_params));
+
+    handle->sweep_index++;
+    if (handle->sweep_index == handle->sweep_length) {
+        /* Set cutoff frequency to target and exit sweep mode */
+        new_params.fc = handle->sweep_fc;
+        handle->sweep_flag = 0;
+    } else {
+        new_params.fc += handle->sweep_step;
+    }
+
+    /* Convert user parameters to internal coefficients */
+    ret = low_pass_design(&new_params, &new_coeffs);
+    if (ret)
+        goto exit;
+
+    /* Update biquad upcoming coefficients */
+    low_pass_feed(handle, &new_coeffs, 1);
+
+    handle->table_index  = 0;
+    handle->update_flag  = 1;
+
+    /* Save new parameters */
+    memcpy(&handle->parameters, &new_params, sizeof(struct low_pass_params));
+
+exit:
+
+    return ret;
+}
+
+
+/* Filter coefficients linear progression to target values */
+static void low_pass_update_coeffs(struct low_pass *handle)
+{
+    int32_t delta;
+    uint16_t scale;
+
+    /* Update filter coefficients (simple linear interpolation) */
+    scale = transition_table[handle->table_index];
+    delta = handle->new_coeffs.b0 - handle->coeffs.b0;
+    handle->coeffs.b0 += (int32_t)(((int64_t)delta * scale) >> TABLE_SCALE);
+    delta = handle->new_coeffs.b1 - handle->coeffs.b1;
+    handle->coeffs.b1 += (int32_t)(((int64_t)delta * scale) >> TABLE_SCALE);
+    delta = handle->new_coeffs.b2 - handle->coeffs.b2;
+    handle->coeffs.b2 += (int32_t)(((int64_t)delta * scale) >> TABLE_SCALE);
+    delta = handle->new_coeffs.a1 - handle->coeffs.a1;
+    handle->coeffs.a1 += (int32_t)(((int64_t)delta * scale) >> TABLE_SCALE);
+    delta = handle->new_coeffs.a2 - handle->coeffs.a2;
+    handle->coeffs.a2 += (int32_t)(((int64_t)delta * scale) >> TABLE_SCALE);
+
+    /* Update transition descriptors */
+    handle->table_index++;
+    if (handle->table_index == TABLE_LEN) {
+        /* Current transition is over */
+        memcpy(&handle->coeffs, &handle->new_coeffs, sizeof(struct low_pass_fp_coeffs));
+        handle->update_flag = 0;
+
+        /* Update sweep state */
+        if (handle->sweep_flag)
+            low_pass_sweep_update(handle);
+
+    }
 }
 
 
@@ -249,6 +299,12 @@ int low_pass_update(struct low_pass *handle, const struct low_pass_params *new_p
         goto exit;
     }
 
+    /* Prevent update during sweep */
+    if (handle->sweep_flag) {
+        ret = -EAGAIN;
+        goto exit;
+    }
+
     /* Convert user parameters to internal coefficients */
     ret = low_pass_design(new_params, &new_coeffs);
     if (ret)
@@ -278,6 +334,38 @@ int low_pass_get_parameters(struct low_pass *handle, struct low_pass_params *par
     }
 
     memcpy(params, &handle->parameters, sizeof(struct low_pass_params));
+
+exit:
+
+    return ret;
+}
+
+
+int low_pass_start_fc_sweep(struct low_pass *handle, float new_fc, int nb_samples)
+{
+    int ret = 0;
+
+    if ((!handle)
+    ||  (new_fc <= 0)
+    ||  (new_fc >= handle->parameters.fs/2)
+    ||  (nb_samples <= 0)) {
+        ret = -EINVAL;
+        goto exit;
+    }
+
+    /* Check if a sweep is already on going */
+    if (handle->sweep_flag) {
+        ret = -EAGAIN;
+        goto exit;
+    }
+
+    handle->sweep_fc     = new_fc;
+    handle->sweep_flag   = 1;
+    handle->sweep_index  = 0;
+    handle->sweep_length = nb_samples / TABLE_LEN;
+    handle->sweep_step   = (new_fc - handle->parameters.fc) / handle->sweep_length;
+
+    low_pass_sweep_update(handle);
 
 exit:
 

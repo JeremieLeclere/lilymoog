@@ -91,6 +91,18 @@ int low_pass_get_parameters(struct low_pass *handle, struct low_pass_params *par
 
 
 /**
+ * @brief Start a cutoff frequency sweep to target value
+ *
+ * @param[in] handle        : Module handle
+ * @param[in] new_fc        : Target new cutoff frequency
+ * @param[in] nb_frames     : Number of nb_samples to reach new cutoff frequency
+ *
+ * @return 0 if successful, 0 > errno else
+ */
+int low_pass_start_fc_sweep(struct low_pass *handle, float new_fc, int nb_samples);
+
+
+/**
  * @brief Proceed to low pass filtering
  *
  * @param[in]  handle       : Module handle

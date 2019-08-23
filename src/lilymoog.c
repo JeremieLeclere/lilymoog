@@ -237,6 +237,20 @@ int main(int argc, char *argv[])
             }
         }
 
+        /* Length update */
+        if (sequence.events[i].len_update != 0)
+            length = sequence.events[i].len_update;
+
+        /* Low pass cutoff frequency sweep */
+        if (sequence.events[i].fc_sweep != 0) {
+            ret = moog_filter_start_fc_sweep(moog, sequence.events[i].fc_sweep, length);
+            if (ret) {
+                LOGE("Failed to start fc sweep !");
+                g_ret = -EINVAL;
+                goto exit;
+            }
+        }
+
         /* Low pass filter parameters update */
         if ((sequence.events[i].q_update != LP_NO_UPDATE_VALUE)
         ||  (sequence.events[i].fc_update != LP_NO_UPDATE_VALUE)
@@ -266,10 +280,6 @@ int main(int argc, char *argv[])
                 goto exit;
             }
         }
-
-        /* Length update */
-        if (sequence.events[i].len_update != 0)
-            length = sequence.events[i].len_update;
 
         /* Output generation */
         for (j = 0; j < length; j++) {

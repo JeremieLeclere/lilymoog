@@ -333,7 +333,7 @@ exit:
 }
 
 
-int moog_filter_set_parameters(struct moog *handle, float fc, float Q, float gain)
+int moog_filter_set_parameters(struct moog *handle, float new_fc, float new_Q, float new_gain)
 {
     int ret = 0;
     struct low_pass_params new_params;
@@ -344,10 +344,27 @@ int moog_filter_set_parameters(struct moog *handle, float fc, float Q, float gai
     }
 
     new_params.fs   = handle->fs;
-    new_params.fc   = fc;
-    new_params.Q    = Q;
-    new_params.gain = gain;
+    new_params.fc   = new_fc;
+    new_params.Q    = new_Q;
+    new_params.gain = new_gain;
     ret = low_pass_update(handle->lpf, &new_params);
+
+exit:
+
+    return ret;
+}
+
+
+int moog_filter_start_fc_sweep(struct moog *handle, float new_fc, int nb_frames)
+{
+    int ret = 0;
+
+    if (!handle) {
+        ret = -EINVAL;
+        goto exit;
+    }
+
+    ret = low_pass_start_fc_sweep(handle->lpf, new_fc, nb_frames * handle->frame_size);
 
 exit:
 

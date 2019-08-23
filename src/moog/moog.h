@@ -173,13 +173,25 @@ int moog_filter_get_parameters(struct moog *handle, float *fc, float *Q, float *
  * @brief Update low pass filter properties
  *
  * @param[in] handle        : Module handle
- * @param[in] fc            : New cutoff frequency (Hz, [0,fs/2[)
- * @param[in] Q             : New quality factor
- * @param[in] gain          : New gain (dB)
+ * @param[in] new_fc        : New cutoff frequency (Hz, [0,fs/2[)
+ * @param[in] new_Q         : New quality factor
+ * @param[in] new_gain      : New gain (dB)
  *
  * @return 0 if successful, 0 > errno else
  */
-int moog_filter_set_parameters(struct moog *handle, float fc, float Q, float gain);
+int moog_filter_set_parameters(struct moog *handle, float new_fc, float new_Q, float new_gain);
+
+
+/**
+ * @brief Start a low pass filter fc sweep
+ *
+ * @param[in] handle        : Module handle
+ * @param[in] new_fc        : Target new cutoff frequency
+ * @param[in] nb_frames     : Number of frames to reach new cutoff frequency
+ *
+ * @return 0 if successful, 0 > errno else
+ */
+int moog_filter_start_fc_sweep(struct moog *handle, float new_fc, int nb_frames);
 
 
 /**

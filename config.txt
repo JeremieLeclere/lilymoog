@@ -1,7 +1,7 @@
 tempo=94
 fs=48000
-lp_fc=400
-lp_Q=1.5
+lp_fc=1000
+lp_Q=1
 lp_gain=1.0
 attack_time=20
 decay_time=5

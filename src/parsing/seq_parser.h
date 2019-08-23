@@ -48,6 +48,7 @@ struct event {
     float q_update;                         ///< Low pass Q factor update
     float fc_update;                        ///< Low pass cutoff frequency update
     float gain_update;                      ///< Low pass gain update
+    float fc_sweep;                         ///< Low pass cutoff frequency start
 };
 
 

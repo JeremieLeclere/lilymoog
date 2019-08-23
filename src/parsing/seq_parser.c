@@ -87,7 +87,7 @@ exit:
  *
  *      KEY:VALUE
  *
- *  . KEY must be in ['q', 'fc', 'gain']
+ *  . KEY must be in ['q', 'fc', 'gain', 'fcs']
  *  . VALUE is a float value representing new KEY value
  */
 static int parse_moog_event(char *token, struct event *event)
@@ -116,6 +116,8 @@ static int parse_moog_event(char *token, struct event *event)
         event->fc_update = value;
     } else if (strcmp(field, "gain") == 0) {
         event->gain_update = value;
+    } else if (strcmp(field, "fcs") == 0) {
+        event->fc_sweep = value;
     } else {
         LOGE("%s: Unsupported moog update type: %s", __func__, token);
         ret = -EINVAL;
@@ -341,7 +343,7 @@ int parse_sequence(const char *filename, struct seq *sequence)
         event_index = 0;
 
         /* Remove \n character if any */
-        if ((c = strchr(line, '\n')) != NULL)
+        if (((c = strchr(line, '\n')) != NULL) || ((c = strchr(line, '\r')) != NULL))
             *c = '\0';
 
         /* Split line in space separated elements */
