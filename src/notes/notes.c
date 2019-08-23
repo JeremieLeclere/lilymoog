@@ -108,37 +108,37 @@ int get_note(int rank, const char *note, float *frequency)
     }
 
     if ((strcmp(note, "C") == 0)
-    ||  (strcmp(note, "Bs") == 0)) {
+    ||  (strcmp(note, "Bd") == 0)) {
         scale = 1.0;
-    } else if ((strcmp(note, "Cs") == 0)
-    ||         (strcmp(note, "Dd") == 0)) {
+    } else if ((strcmp(note, "Cd") == 0)
+    ||         (strcmp(note, "Db") == 0)) {
         scale = pow(2, 1.0/12);
     } else if (strcmp(note, "D") == 0) {
         scale = pow(2, 2.0/12);
-    } else if ((strcmp(note, "Ds") == 0)
-    ||         (strcmp(note, "Ed") == 0)) {
+    } else if ((strcmp(note, "Dd") == 0)
+    ||         (strcmp(note, "Eb") == 0)) {
         scale = pow(2, 3.0/12);
     } else if ((strcmp(note, "E") == 0)
-    ||         (strcmp(note, "Fd") == 0)) {
+    ||         (strcmp(note, "Fb") == 0)) {
         scale = pow(2, 4.0/12);
     } else if ((strcmp(note, "F") == 0)
-    ||         (strcmp(note, "Es") == 0)) {
+    ||         (strcmp(note, "Ed") == 0)) {
         scale = pow(2, 5.0/12);
-    } else if ((strcmp(note, "Fs") == 0)
-    ||         (strcmp(note, "Gd") == 0)) {
+    } else if ((strcmp(note, "Fd") == 0)
+    ||         (strcmp(note, "Gb") == 0)) {
         scale = pow(2, 6.0/12);
     } else if (strcmp(note, "G") == 0) {
         scale = pow(2, 7.0/12);
-    } else if ((strcmp(note, "Gs") == 0)
-    ||       (strcmp(note, "Ad") == 0)) {
+    } else if ((strcmp(note, "Gd") == 0)
+    ||       (strcmp(note, "Ab") == 0)) {
         scale = pow(2, 8.0/12);
     } else if (strcmp(note, "A") == 0) {
         scale = pow(2, 9.0/12);
-    } else if ((strcmp(note, "As") == 0)
-    ||       (strcmp(note, "Bd") == 0)) {
+    } else if ((strcmp(note, "Ad") == 0)
+    ||       (strcmp(note, "Bb") == 0)) {
         scale = pow(2, 10.0/12);
     } else if ((strcmp(note, "B") == 0)
-    ||         (strcmp(note, "Cd") == 0)) {
+    ||         (strcmp(note, "Cb") == 0)) {
         scale = pow(2, 11.0/12);
     } else {
         ret = -EINVAL;
