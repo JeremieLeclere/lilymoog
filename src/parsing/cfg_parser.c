@@ -262,6 +262,10 @@ int parse_cfg(const char *filename, struct cfg *configuration)
         if ((c = strchr(line, '\n')) != NULL)
             *c = '\0';
 
+        /* Skip comments */
+        if (line[0] == '#')
+            continue;
+
         token = strtok(line, "=");
         if (!token)
             continue;
