@@ -319,6 +319,10 @@ int parse_sequence(const char *filename, struct seq *sequence)
     sequence->nb_events = 0;
     while (getline(&line, &line_size, fd) != -1) {
 
+        /* Skip comments */
+        if (line[0] == '#')
+            continue;
+
         /* Split line in space separated elements */
         token = strtok_r(line, " ", &ctx);
         while (token) {
@@ -345,6 +349,10 @@ int parse_sequence(const char *filename, struct seq *sequence)
         /* Remove \n character if any */
         if (((c = strchr(line, '\n')) != NULL) || ((c = strchr(line, '\r')) != NULL))
             *c = '\0';
+
+        /* Skip comments */
+        if (line[0] == '#')
+            continue;
 
         /* Split line in space separated elements */
         token = strtok(line, " ");
